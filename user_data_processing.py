@@ -7,10 +7,10 @@ import os
 def read_jsonl(file_path: str = 'data.jsonl') -> tuple:
     """Reads user data from jsonl-file.
         Converts 'time_created' field to datetime type.
-        Adds user data to tuple"""
+        Add user data to tuple"""
     readed_data = []
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             for line in f.readlines():
                 data = json.loads(line)
                 data['time_created'] = dt.fromtimestamp(data['time_created'])
@@ -22,6 +22,7 @@ def read_jsonl(file_path: str = 'data.jsonl') -> tuple:
         print("Exception: ", e, '\n')
 
     print(f"Readed {len(readed_data)} records")
+
     return tuple(readed_data)
 
 
@@ -35,6 +36,7 @@ def duplicate_remove(data: tuple) -> tuple:
             temp[key] = record
 
     print(f"Removed {len(data) - len(temp)} duplicates")
+
     return tuple([v for v in temp.values()])
 
 
@@ -99,6 +101,7 @@ def get_field_default_value(fields: dict, data: tuple) -> dict:
 
     return fields
 
+
 def get_empty_fields(fields: dict, data: tuple) -> set:
     """Get set of empty fields."""
     empty_fields = set()
@@ -151,33 +154,42 @@ def write_data(data: dict) -> None:
     counter = 0
 
     for date_created in data:
-        with open('users_data/' + date_created+'.jsonl', 'w') as f:
+        with open('users_data/' + date_created + '.jsonl', 'w', encoding='utf-8') as f:
             for record in data[date_created]:
-                f.write(json.dumps(record)+'\n')
+                f.write(json.dumps(record) + '\n')
                 counter += 1
 
-    print(f"\nUser data processing successfull!. {counter} records made.")
+    print(f"\nUser data processing successful!. {counter} records made.")
+
 
 def main():
-    hello = input("If filename is 'data.jsonl' and it in same directory widh this module - press Enter\n"
-          "Else write path to file and press Enter. Enter 'q' to exit program:\n")
+    """Calls other functions in order"""
+    hello = input("If filename is 'data.jsonl' and it in same directory with this module - press Enter\n"
+                  "Else write path to file and press Enter. Enter 'q' to exit program:\n")
+
     if hello == 'q':
         print('Bye')
         return
+
     raw_data = read_jsonl(hello) if hello else read_jsonl()
+
+    if not raw_data:
+        print("File is empty!")
+        return
+
     unique_data = duplicate_remove(raw_data)
     all_fields = get_fields_list(unique_data)
     empty_fields_data = get_empty_fields(all_fields, unique_data)
+
     if empty_fields_data:
         empty_fields_data = get_fields_type(empty_fields_data, unique_data)
         empty_fields_data = get_field_default_value(empty_fields_data, unique_data)
         for key in empty_fields_data:
             all_fields[key].update(empty_fields_data[key])
+
     unique_data_full = fill_existing_fields(unique_data, all_fields)
     write_data(unique_data_full)
 
 
 if __name__ == '__main__':
     main()
-
-
